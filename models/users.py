@@ -1,8 +1,9 @@
 from werkzeug.security import generate_password_hash, check_password_hash
-from ..app import db
+from flask_login import UserMixin
+from ..app import db, login_manager
 
 
-class Users(db.Model):
+class Users(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(30), unique=True, index=True)
     email = db.Column(db.String(64), unique=True, index=True)
@@ -18,5 +19,6 @@ class Users(db.Model):
         return check_password_hash(self.password_hash, password)
 
 
-
-
+@login_manager.user_loader
+def load_user(id):
+    return Users.query.get(int(id))
