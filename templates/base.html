@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head>
+        {% if title %}
+        <title>{{ title }} - Qui Blog</title>
+        {% else %}
+        <title>Welcome to Qui Plog</title>
+        {% endif %}
+</head>
+<body>
+<div>Microblog:
+        <a href="/index">Home</a>
+        <a href="/login">Login</a>
+</div>
+<hr>
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+
+{% for message in messages %}
+<em style="color:green;">{{ message }}</em>
+{% endfor %}
+
+{% endif %}
+{% endwith %}
+{% block content %}{% endblock %}
+</body>
+</html>
