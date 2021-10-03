@@ -1,7 +1,7 @@
-from flask import Flask, flash, redirect, render_template, url_for, request
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, flash, redirect, render_template, request, url_for
+from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from flask_migrate import Migrate
-from flask_login import LoginManager, current_user, login_user, logout_user, login_required
+from flask_sqlalchemy import SQLAlchemy
 from werkzeug.urls import url_parse
 
 from .config import Config
@@ -54,6 +54,7 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -68,3 +69,8 @@ def register():
         flash('Register successfully!')
         return redirect(url_for('login'))
     return render_template('register.html', form=form, title='Register')
+
+
+@app.route('/reset')
+def reset():
+    return render_template('reset_password.html', title='Reset Password')
