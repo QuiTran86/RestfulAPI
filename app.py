@@ -4,8 +4,9 @@ from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.urls import url_parse
 
-from .config import Config
-from .forms import LoginForm, RegisterForm
+from RestfulAPI.config import Config
+from RestfulAPI.forms import LoginForm, RegisterForm
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -38,6 +39,7 @@ def login():
         # Import here to avoid circular import
         from .models.users import Users
         user = Users.query.filter_by(username=form.username.data).first()
+        #TODO: should validate user info in service account
         if not (user and user.check_password(form.password.data)):
             flash(f'Username or password is invalid, please check again!')
             return redirect(url_for('login'))
@@ -62,10 +64,8 @@ def register():
     form = RegisterForm()
     if form.validate_on_submit():
         from .models.users import Users
-        user = Users(username=form.username.data, email=form.email.data)
-        user.set_password(form.password.data)
-        db.session.add(user)
-        db.session.commit()
+        from RestfulAPI.service.user_account import AccountService
+        AccountService().store_account(form.username.data, account_email=form.email.data, password=form.password.data)
         flash('Register successfully!')
         return redirect(url_for('login'))
     return render_template('register.html', form=form, title='Register')
