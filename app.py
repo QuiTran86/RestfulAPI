@@ -7,7 +7,6 @@ from werkzeug.urls import url_parse
 from RestfulAPI.config import Config
 from RestfulAPI.forms import LoginForm, RegisterForm
 
-
 app = Flask(__name__)
 app.config.from_object(Config)
 db = SQLAlchemy(app)
@@ -36,11 +35,9 @@ def login():
         return redirect(url_for('index'))
     form = LoginForm()
     if form.validate_on_submit():
-        # Import here to avoid circular import
-        from .models.users import Users
-        user = Users.query.filter_by(username=form.username.data).first()
-        #TODO: should validate user info in service account
-        if not (user and user.check_password(form.password.data)):
+        from RestfulAPI.service.user_account import AccountService
+        user = AccountService.is_valid_account(username=form.username.data, password=form.password.data)
+        if not user:
             flash(f'Username or password is invalid, please check again!')
             return redirect(url_for('login'))
         login_user(user, remember=form.remember_me.data)
@@ -74,3 +71,15 @@ def register():
 @app.route('/reset')
 def reset():
     return render_template('reset_password.html', title='Reset Password')
+
+
+@app.route('/user/<username>')
+@login_required
+def user(username):
+    from RestfulAPI.service.user_account import AccountService
+    user = AccountService.get_user(username=username)
+    posts = [
+        {'author': user, 'body': 'Test post #1'},
+        {'author': user, 'body': 'Test post #2'}
+    ]
+    return render_template('user.html', user=user, posts=posts)
