@@ -8,6 +8,17 @@ class EditProfileForm(FlaskForm):
     about_me = TextAreaField('About Me', validators=[Length(min=0, max=150)])
     submit = SubmitField('Submit')
 
+    def __init__(self, original_name, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.original_name = original_name
+
+    def validate_username(self, username):
+        if username.data != self.original_name:
+            from RestfulAPI.models.users import Users
+            user = Users.query.filter_by(username=username.data).first()
+            if user:
+                raise ValidationError('Please use an other username.')
+
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])

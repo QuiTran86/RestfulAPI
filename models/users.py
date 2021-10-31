@@ -5,6 +5,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from ..app import db, login_manager
 
+followers = db.Table('followers',
+                     db.Column('follower_id', db.Integer, db.ForeignKey('users.id')),
+                     db.Column('followed_id', db.Integer, db.ForeignKey('users.id')))
+
 
 class Users(UserMixin, db.Model):
     about_me = db.Column(db.String(140))
@@ -13,6 +17,11 @@ class Users(UserMixin, db.Model):
     email = db.Column(db.String(64), unique=True, index=True)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     password_hash = db.Column(db.String(128))
+
+    followed = db.relationship('Users', secondary=followers,
+                               primaryjoin=followers.c.follower_id,
+                               secondaryjoin=followers.c.followed_id,
+                               backref=db.backref('followers', lazy='dynamic'), lazy='dynamic')
 
     def __repr__(self):
         return f'User {self.username}'
