@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.urls import url_parse
 
 from RestfulAPI.config import Config
-from RestfulAPI.forms import LoginForm, RegisterForm
+from RestfulAPI.forms import LoginForm, RegisterForm, EditProfileForm
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -14,6 +14,22 @@ migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 
 login_manager.login_view = 'login'
+
+
+@app.route('/edit_profile', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    form = EditProfileForm()
+    if form.validate_on_submit():
+        current_user.username = form.username.data
+        current_user.about_me = form.about_me.data
+        db.session.commit()
+        flash('Changed information successfully!')
+        return redirect(url_for('edit_profile'))
+    elif request.method == 'GET':
+        form.username.data = current_user.username
+        form.username.about_me = current_user.about_me
+    return render_template('edit_profile.html', title='Edit Profile', form=form)
 
 
 @app.route('/')
@@ -36,7 +52,8 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         from RestfulAPI.service.user_account import AccountService
-        user = AccountService.is_valid_account(username=form.username.data, password=form.password.data)
+        user = AccountService.is_valid_account(username=form.username.data,
+                                               password=form.password.data)
         if not user:
             flash(f'Username or password is invalid, please check again!')
             return redirect(url_for('login'))
@@ -60,9 +77,9 @@ def register():
         return redirect(url_for('index'))
     form = RegisterForm()
     if form.validate_on_submit():
-        from .models.users import Users
         from RestfulAPI.service.user_account import AccountService
-        AccountService().store_account(form.username.data, account_email=form.email.data, password=form.password.data)
+        AccountService().store_account(form.username.data, account_email=form.email.data,
+                                       password=form.password.data)
         flash('Register successfully!')
         return redirect(url_for('login'))
     return render_template('register.html', form=form, title='Register')
@@ -83,3 +100,9 @@ def user(username):
         {'author': user, 'body': 'Test post #2'}
     ]
     return render_template('user.html', user=user, posts=posts)
+
+
+@app.before_request
+def before_request():
+    from RestfulAPI.service.user_account import AccountService
+    AccountService().track_account(current_user)
